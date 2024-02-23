@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "yahoo-finance2": "^2.9.1",
+    "yahoo-stock-prices": "^1.1.0"
+  }
+}
