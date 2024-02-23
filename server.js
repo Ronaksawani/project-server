@@ -73,6 +73,10 @@ const dateToUse = getDateToUse();
 const formattedDate = formatDateToYYYYMMDD(dateToUse);
 console.log("Date to use:", formattedDate);
 
+app.get("/", async (req,res) => {
+  res.send("hello")
+});
+
 app.get("/chart/ohlc", async (req, res) => {
   try {
     var quote;
