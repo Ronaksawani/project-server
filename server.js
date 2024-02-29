@@ -6,7 +6,11 @@ const app = express();
 const port = 3002;
 
 // Enable CORS
-app.use(cors());
+app.use(cors({
+  origin:{""},
+  method:{"GET","POST"},
+  
+}));
 
 // Main function to determine whether to use today's date or yesterday's date
 function getDateUse() {
