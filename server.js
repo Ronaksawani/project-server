@@ -168,6 +168,35 @@ app.get("/server2/current-prices", async (req, res) => {
   }
 });
 
+app.get("/watchlist/current-prices", async (req, res) => {
+  try {
+    const watchList = req.query.watchlist; // symbols will be an array of symbols
+    const serverwatchList = [];
+    // console.log(watchList);
+    for (const transaction of watchList) {
+      //console.log(transaction.symbol);
+      console.log(transaction.symbol);
+      const quote = await yahooFinance.quote(transaction.symbol + ".NS");
+
+      const modifiedTransaction = {
+        ...transaction,
+        serverCurrentPrice: parseFloat(quote.regularMarketPrice).toFixed(2),
+        serverMarketChange: parseFloat(quote.regularMarketChange).toFixed(2),
+        serverMarketChangePercent: parseFloat(
+          quote.regularMarketChangePercent
+        ).toFixed(2),
+      };
+      serverwatchList.push(modifiedTransaction);
+    }
+    //console.log(serverOrderList);
+    res.json(serverwatchList);
+    // console.log("server 2 got connected", orderList);
+  } catch (error) {
+    console.error("Error fetching current watchlist prices:", error);
+    res.status(500).json({ error: "Internal Server Error group" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
