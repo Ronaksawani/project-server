@@ -197,6 +197,17 @@ app.get("/watchlist/current-prices", async (req, res) => {
   }
 });
 
+app.get('/market-status', async (req, res) => {
+    try {
+      const response = await axios.get("https://www.nseindia.com/api/marketStatus");
+      console.log(response.data);
+      res.json(response.data.marketState[0].marketStatus); // Send the market status as JSON response
+    } catch (error) {
+      console.error("Error fetching market status:", error);
+      res.status(500).json({ error: 'Error fetching market status' }); // Send error response to client
+    }
+  });
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
