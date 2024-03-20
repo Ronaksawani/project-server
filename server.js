@@ -1,7 +1,7 @@
 const express = require("express");
 const yahooFinance = require("yahoo-finance2").default;
 const cors = require("cors");
-const moment = require("moment-timezone");
+
 
 const app = express();
 const port = 3002;
@@ -200,16 +200,15 @@ app.get("/watchlist/current-prices", async (req, res) => {
 
 // Define market status logic
 function getMarketStatus() {
-  const currentTime = moment().tz('Asia/Kolkata'); // Get current time in Indian time zone (IST)
-
-  const dayOfWeek = currentTime.day(); // Sunday is 0, Saturday is 6
+  const currentDate = new Date();
+  const dayOfWeek = currentDate.getDay(); // Sunday is 0, Saturday is 6
 
   if (dayOfWeek === 0 || dayOfWeek === 6) {
     return "Closed";
   }
 
-  const currentHour = currentTime.hour();
-  const currentMinute = currentTime.minute();
+  const currentHour = currentDate.getHours();
+  const currentMinute = currentDate.getMinutes();
   const marketOpenHour = 9;
   const marketCloseHour = 15;
 
@@ -233,6 +232,7 @@ app.get("/api/market-status", (req, res) => {
   const marketStatus = getMarketStatus();
   res.json({ status: marketStatus });
 });
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
