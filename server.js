@@ -197,16 +197,39 @@ app.get("/watchlist/current-prices", async (req, res) => {
   }
 });
 
-app.get('/market-status', async (req, res) => {
-    try {
-      const response = await axios.get("https://www.nseindia.com/api/marketStatus");
-      console.log(response.data);
-      res.json(response.data.marketState[0].marketStatus); // Send the market status as JSON response
-    } catch (error) {
-      console.error("Error fetching market status:", error);
-      res.status(500).json({ error: 'Error fetching market status' }); // Send error response to client
+function getMarketStatus() {
+  const currentDate = new Date();
+  const dayOfWeek = currentDate.getDay(); // Sunday is 0, Saturday is 6
+
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return "Closed";
+  }
+
+  const currentHour = currentDate.getHours();
+  const currentMinute = currentDate.getMinutes();
+  const marketOpenHour = 9;
+  const marketCloseHour = 15;
+
+  if (
+    currentHour > marketOpenHour ||
+    (currentHour === marketOpenHour && currentMinute >= 15) // Assuming market opens at 9:15 AM
+  ) {
+    if (
+      currentHour < marketCloseHour ||
+      (currentHour === marketCloseHour && currentMinute <= 30) // Assuming market closes at 3:30 PM
+    ) {
+      return "Open";
     }
-  });
+  }
+
+  return "Closed";
+}
+
+// Define API endpoint to get market status
+app.get("/api/market-status", (req, res) => {
+  const marketStatus = getMarketStatus();
+  res.json({ status: marketStatus });
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
