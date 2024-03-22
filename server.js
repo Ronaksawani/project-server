@@ -50,16 +50,11 @@ async function getAllDocuments() {
 }
 
 // Schedule the function to run at 3:31 PM every day
-cron.schedule(
-  "31 15 * * *",
-  () => {
-    console.log("Running getAllDocuments() at 3:31 PM");
-    getAllDocuments();
-  },
-  {
-    timezone: "Asia/Kolkata", // Change the timezone if necessary
-  }
-);
+app.get("/cron-trigger", (req, res) => {
+  console.log("Received cron job trigger request.");
+  getAllDocuments(); // Call your existing function here
+  res.send("Cron job triggered successfully.");
+});
 
 // Main function to determine whether to use today's date or yesterday's date
 function getDateUse() {
