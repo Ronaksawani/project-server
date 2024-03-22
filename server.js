@@ -1,13 +1,65 @@
 const express = require("express");
 const yahooFinance = require("yahoo-finance2").default;
 const cors = require("cors");
-
+const admin = require("firebase-admin");
+const serviceAccount = require("./dailypunch-76518-firebase-adminsdk-6i4bj-7b8b24bd2a.json");
+const cron = require("node-cron");
 
 const app = express();
 const port = 3002;
 
 // Enable CORS
 app.use(cors());
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore();
+
+async function getAllDocuments() {
+  try {
+    const collectionRef = db.collection("users");
+    const snapshot = await collectionRef.get();
+
+    snapshot.forEach(async (doc) => {
+      console.log(doc.id, " => ", doc.data());
+
+      // Get current margin_chart data from Firestore
+      const existingMarginChart = doc.data().marginChart || [];
+
+      // Get margin_available and current timestamp
+      const marginAvailable = doc.data().margin_available;
+      const currentTime = Math.floor(Date.now() / 1000);
+
+      // Create updated margin_chart array
+      const updatedMarginChart = [
+        ...existingMarginChart,
+        { value: marginAvailable, time: currentTime },
+      ];
+
+      // Define the document reference
+      const docRef = db.collection("users").doc(doc.id);
+
+      // Update margin_chart in Firestore
+      await docRef.update({ marginChart: updatedMarginChart });
+      console.log("Margin chart updated successfully!");
+    });
+  } catch (error) {
+    console.error("Error getting documents:", error);
+  }
+}
+
+// Schedule the function to run at 3:31 PM every day
+cron.schedule(
+  "31 15 * * *",
+  () => {
+    console.log("Running getAllDocuments() at 3:31 PM");
+    getAllDocuments();
+  },
+  {
+    timezone: "Asia/Kolkata", // Change the timezone if necessary
+  }
+);
 
 // Main function to determine whether to use today's date or yesterday's date
 function getDateUse() {
