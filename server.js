@@ -4,7 +4,6 @@ const cors = require("cors");
 const admin = require("firebase-admin");
 const serviceAccount = require("./dailypunch-76518-firebase-adminsdk-6i4bj-7b8b24bd2a.json");
 
-
 const app = express();
 const port = 3002;
 
