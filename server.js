@@ -183,9 +183,15 @@ app.get("/chart/ohlc", async (req, res) => {
 app.get("/api/stock-price", async (req, res) => {
   try {
     const symbols = req.query.symbols;
-    const quote = await yahooFinance.quote(symbols + ".NS");
-    const price = parseFloat(quote.regularMarketPrice).toFixed(2);
+
+    // Call the check function with the provided symbol
+
+    const quote = await check(symbols);
+    const price = parseFloat(quote).toFixed(2);
     res.json({ price });
+
+    // Log the price for debugging
+    //console.log(price);
   } catch (error) {
     console.error("Error fetching stock price:", error);
     res.status(500).json({ error: "Internal Server Error single" });
@@ -199,10 +205,10 @@ app.get("/server2/current-prices", async (req, res) => {
 
     for (const transaction of orderList) {
       //console.log(transaction.symbol);
-      const quote = await yahooFinance.quote(transaction.symbol + ".NS");
+      const quote = await check(transaction.symbol);
       const modifiedTransaction = {
         ...transaction,
-        serverCurrentPrice: parseFloat(quote.regularMarketPrice).toFixed(2),
+        serverCurrentPrice: parseFloat(quote).toFixed(2),
       };
       serverOrderList.push(modifiedTransaction);
     }
@@ -219,19 +225,19 @@ app.get("/watchlist/current-prices", async (req, res) => {
   try {
     const watchList = req.query.watchlist; // symbols will be an array of symbols
     const serverwatchList = [];
-    // console.log(watchList);
-    for (const transaction of watchList) {
+    console.log(watchList);
+
+    const transactions = Object.values(watchList);
+    for (const transaction of transactions) {
       //console.log(transaction.symbol);
       console.log(transaction.symbol);
-      const quote = await yahooFinance.quote(transaction.symbol + ".NS");
+      const quote = await check(transaction.symbol);
 
       const modifiedTransaction = {
         ...transaction,
-        serverCurrentPrice: parseFloat(quote.regularMarketPrice).toFixed(2),
-        serverMarketChange: parseFloat(quote.regularMarketChange).toFixed(2),
-        serverMarketChangePercent: parseFloat(
-          quote.regularMarketChangePercent
-        ).toFixed(2),
+        serverCurrentPrice: parseFloat(quote).toFixed(2),
+        serverMarketChange: parseFloat(quote).toFixed(2),
+        serverMarketChangePercent: parseFloat(quote).toFixed(2),
       };
       serverwatchList.push(modifiedTransaction);
     }
@@ -279,6 +285,53 @@ app.get("/api/market-status", (req, res) => {
   res.json({ status: marketStatus });
 });
 
+async function check(symbol) {
+  try {
+    var quote;
+    const quote1 = await yahooFinance.chart(symbol + ".NS", {
+      period1: "2024-02-19",
+      return: "object",
+      interval: "2m",
+    });
+    quote = quote1;
+    if (
+      !quote1 ||
+      !quote1.indicators ||
+      !quote1.indicators.quote ||
+      !quote1.timestamp
+    ) {
+      console.log("Quote data is empty, using yesterday's date.");
+      // Use yesterday's date if quote data is empty
+      const yesterday = getYesterdayDate();
+      const formattedYesterday = formatDateToYYYYMMDD(yesterday);
+      const quote1 = await yahooFinance.chart(symbol + ".NS", {
+        period1: formattedYesterday,
+        return: "object",
+        interval: "1m",
+      });
+      quote = quote1;
+    }
+    const timestamps = quote.timestamp;
+    const ohlc = quote.indicators.quote;
+
+    // Format the data
+    const formattedData = timestamps.map((timestamp, index) => ({
+      time: timestamp + 19800,
+      open: ohlc[0].open[index], // Convert to float before formatting
+      high: ohlc[0].high[index],
+      low: ohlc[0].low[index],
+      close: ohlc[0].close[index],
+    }));
+
+    // Return the close price
+    return parseFloat(formattedData.slice(-1)[0].close).toFixed(2);
+  } catch (error) {
+    console.log("Error fetching chart data", error);
+    // Handle the error as needed
+    // Throw the error or return a default value
+    throw error;
+  }
+}
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
